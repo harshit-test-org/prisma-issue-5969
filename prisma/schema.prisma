@@ -1,0 +1,196 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["createMany"]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  created     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lists       List[]
+  searches    Search[]
+}
+
+model List {
+  id        Int        @id @default(autoincrement())
+  project   Project    @relation(fields: [projectId], references: [id])
+  projectId Int
+  name      String
+  created   String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  phrases   Phrase[]
+  snapshots Snapshot[]
+}
+
+model Search {
+  id         Int         @id @default(autoincrement())
+  project    Project     @relation(fields: [projectId], references: [id])
+  projectId  Int
+  name       String
+  archived   Boolean
+  created    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  words      Word[]
+  snapshots  Snapshot[]
+  targets    Target[]
+  knownlists Knownlist[]
+}
+
+model Phrase {
+  id        Int      @id @default(autoincrement())
+  list      List     @relation(fields: [listId], references: [id])
+  listId    Int
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sites     Site[]
+}
+
+model Snapshot {
+  id         Int         @id @default(autoincrement())
+  list       List        @relation(fields: [listId], references: [id])
+  listId     Int
+  name       String
+  length     Int
+  depth      Int
+  created    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  sites      Site[]
+  searches   Search[]
+  affiliates Affiliate[]
+}
+
+model Word {
+  id             Int      @id @default(autoincrement())
+  search         Search   @relation(fields: [searchId], references: [id])
+  searchId       Int
+  content        String
+  forUrlMatching Boolean
+  createdAt      DateTime @default(now())
+}
+
+model Target {
+  id         Int         @id @default(autoincrement())
+  search     Search      @relation(fields: [searchId], references: [id])
+  searchId   Int
+  title      String
+  href       String
+  thumbnail  String?
+  created    String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  affiliates Affiliate[]
+}
+
+model Knownlist {
+  id        Int      @id @default(autoincrement())
+  title     String?
+  origin    String
+  colored   Boolean
+  default   Boolean
+  reason    String?
+  thumbnail String?
+  created   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  searches  Search[] // これないとどうなるの？？？
+}
+
+model Site {
+  id               Int        @id @default(autoincrement())
+  snaphost         Snapshot   @relation(fields: [snapshotId], references: [id])
+  snapshotId       Int
+  phrase           Phrase     @relation(fields: [phraseId], references: [id])
+  phraseId         Int
+  // media Media? @relation(fields: [origin], references: [origin])
+  origin           String
+  rank             Int
+  title            String?
+  htmlTitle        String?
+  link             String
+  displayLink      String?
+  snippet          String?
+  htmlSnippet      String?
+  cacheId          String?
+  formattedUrl     String?
+  htmlFormattedUrl String?
+  pagemap          Json?
+  body             String?
+  status           Int?
+  time             Int?
+  created          String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  affiliate        Affiliate?
+}
+
+model Affiliate {
+  id         Int      @id @default(autoincrement())
+  target     Target   @relation(fields: [targetId], references: [id])
+  targetId   Int
+  snapshot   Snapshot @relation(fields: [snapshotId], references: [id])
+  snapshotId Int
+  site       Site     @relation(fields: [siteId], references: [id])
+  siteId     Int
+  attempt    Int
+  href       String
+  html       String
+  chain      Json
+  createdAt  DateTime @default(now())
+  chains     Chain[]
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  fid       String
+  title     String?
+  link      String
+  protocol  String
+  host      String
+  origin    String   @unique
+  thumbnail String?
+  created   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // sites Site[]
+}
+
+model Provider {
+  id        Int      @id @default(autoincrement())
+  origin    String   @unique
+  created   String
+  createdAt DateTime @default(now())
+  // chins Chain[]
+}
+
+model Chain {
+  id          Int       @id @default(autoincrement())
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  affiliateId Int
+  index       Int
+  href        String
+  // provider Provider @relation(fields: [origin], references: [origin])
+  origin      String
+}
+
+model Process {
+  id       String  @unique
+  type     Int
+  parentId Int
+  childId  Int
+  started  String
+  ended    String?
+  error    String?
+}
+
